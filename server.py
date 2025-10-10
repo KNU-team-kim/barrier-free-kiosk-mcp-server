@@ -1,12 +1,18 @@
 import anyio
 import json
-from dotenv import load_dotenv
 from loguru import logger
 from typing import Optional
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
-import requests
-import os
+from steps.move_in_steps import MOVE_IN_STEPS
+from steps.resident_registration_steps import RESIDENT_REGISTRATION_STEP
+from prompts.move_in_prompt import MOVE_IN_PROMPT
+from prompts.resident_registration_prompt import RESIDENT_REGISTRATION_PROMPT
+from interfaces.move_in_output import MoveInOutput
+from interfaces.resident_registration_output import ResidentRegistrationOutput
+from interfaces.output import Output
+from fetch.fetch_move_in import fetch_move_in
+from fetch.fetch_resident_registration import fetch_resident_registration
 
 from mcp.server.elicitation import (
     AcceptedElicitation,
@@ -21,80 +27,11 @@ from langchain.output_parsers import OutputFixingParser, PydanticOutputParser
 
 from mcp.server.fastmcp import FastMCP, Context
 
-load_dotenv()
 
 mcp_server = FastMCP("Barrier Free Kiosk MCP Server", port=8001, host="0.0.0.0")
 
-KIOSK_APP_URL = os.getenv("KIOSK_APP_URL")
-
-MOVE_IN_STEPS = [
-    (
-        "name",
-        "Step 1, The user needs to provide their name. Ask the user to tell their name. If a name is provided, confirm."
-    ),
-    (
-        "phone_number",
-        "Step 2, The user needs to provide their phone number. Ask the user to tell their phone number, without giving any formatting instructions. If a phone number is provided without hyphens, automatically convert it into the format 010-1234-5678. If provided, confirm."
-    ),
-    (
-        "reason",
-        """
-        Step 3, The user must decide the reason for moving in. Ask the user why they are moving in. If a reason is provided, confirm.
-        Do NOT show any category list to the user. Instead, infer the correct category internally based on their response and store exactly one of: 
-            - JOB (Employment: getting a job, starting a business, job relocation, etc.) 
-            - FAMILY (Family: living with family, marriage, moving out from parents, etc.) 
-            - HOUSE (Housing: buying a house, lease expiration, rent issues, redevelopment, etc.) 
-            - EDUCATION (Education: admission, studies, children's education, etc.) 
-            - ENVIRONMENT (Living environment: transportation, culture, facilities, etc.) 
-            - NATURE (Natural environment: health, pollution, rural life, etc.)
-        """
-    ),
-    (
-        "before_address",
-        """
-            Step 4, Ask the user to provide the classification of their previous place of residence. Ask for the city/province (시/도), district/county (시/군/구), without giving any formatting instructions. If all of them are provided, confirm.
-                example of city/province: 대구광역시, 서울특별시 etc.  
-                example of district/county: 강남구, 중구, 수원시 etc.
-            Classifications must be splited by `,`. Do NOT show any example to the user.
-        """
-    ),
-    (
-        "after_address",
-        """
-            Step 5, Ask the user to provide the classification of their current place of residence. Ask for the city/province (시/도), district/county (시/군/구), road name (도로명), building number (건물 번호), detail address (상세 주소), without giving any formatting instructions. If all of them are provided, confirm.
-                example of city/province: 대구광역시, 서울특별시 etc.  
-                example of district/county: 강남구, 중구, 수원시 etc.
-                example of road name: 대학로, 산격로, 대천로 etc.
-                example of detail address: 100동 100호 etc.
-            Classifications must be splited by `,`. Do NOT show any example to the user.
-        """
-    )
-]
-
-RESIDENT_REGISTRATION_STEP = [
-    (
-        "registration_number",
-        "Step 1, Ask the user to tell their registration number (주민등록번호). Please guide them not to say it aloud, but to enter the number using the keypad below. If provided, confirm."
-    ),
-    (
-        "type",
-        """
-            Step 2, Ask the user whether they want to issue the entire document or select specific sections. If provided, confirm.
-            Do NOT show any category list to the user. Instead, infer the correct category internally based on their response and store exactly one of:
-                - SIMPLE(select specific sections)
-                - DETAILED(entire document)
-        """
-    ),
-    (
-        "number",
-        "Step 3, Ask the user to specify the number of copies they want to issue. If provided, confirm."
-    )
-]
-
-
 class ElicitationResponse(BaseModel):
     user_message: Optional[str] = Field(default=None)
-
 
 class InvestmentStepOutput(BaseModel):
     """
@@ -123,58 +60,10 @@ class InvestmentStepOutput(BaseModel):
         ),
     )
 
-
-class MoveInOutput(BaseModel):
-    name: Optional[str] = Field(default=None)
-    phone_number: Optional[str] = Field(default=None)
-    reason: Optional[str] = Field(default=None)
-    before_address: Optional[str] = Field(default=None)
-    after_address: Optional[str] = Field(default=None)
-
-
-class ResidentRegistrationOutput(BaseModel):
-    registration_number: Optional[str] = Field(default=None)
-    type: Optional[str] = Field(default=None)
-    number: Optional[str] = Field(default=None)
-
-
-class Output(BaseModel):
-    message: Optional[str] = Field(default=None)
-
-
-async def retrieve_move_in_agent_chain():
+async def retrieve_agent_chain(PROMPT: str):
     llm = ChatOpenAI(model="gpt-4.1", streaming=False)
-    system_message = """
-        You are an intelligent and adaptive assistant designed to guide users through a step-by-step 
-        process to register a move-in report. Your role is to gather input for the following stages: 
-        name, phone number, reason of moving in, previous address and current address. 
+    system_message = PROMPT
 
-        At each step, you will receive a step name and a related parameter value. 
-        Based on this, generate a relevant, concise, and professional prompt to confirm or elicit 
-        information from the user. Be clear, avoid jargon, and aim to complete the information through 
-        conversational interaction. Use previous context if available to enhance personalization.
-        
-        Now handle the current step:
-        {step_prompt}
-        
-        Your task is to:
-            - Generate a concise, user-facing message (`ai_message`) asking for or confirming information.
-            - If the user's input (parameter) is sufficient to proceed, extract it into the `data` field. Otherwise, leave `data` as null and guide the user to clarify.
-        
-            - If `data` is provided (i.e. already filled), simply thank the user for their response.
-            - Do **not** ask any follow-up questions or mention the next step.
-            - All conversation must be conducted in **Korean**.
-            - Politely ask the user to 말씀 their information.
-
-        Always respond in **this JSON structure**:
-        {{
-          "ai_message": "string",  
-          "data": "string or null"
-        }}
-        
-        If the data field is filled, simply thank the user. Do not mention anything about the next step.    
-        
-        """
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_message),
@@ -189,93 +78,12 @@ async def retrieve_move_in_agent_chain():
     )
     agent_chain = prompt | llm | output_parser
     return agent_chain
-
-async def retrieve_resident_registration_agent_chain():
-    llm = ChatOpenAI(model="gpt-4.1", streaming=False)
-    system_message = """
-        You are an intelligent and adaptive assistant designed to guide users through a step-by-step 
-        process to issue a Resident Registration Certificate. Your role is to gather input for the following stages: 
-        registration number, type of issue, number of copies. 
-
-        At each step, you will receive a step name and a related parameter value. 
-        Based on this, generate a relevant, concise, and professional prompt to confirm or elicit 
-        information from the user. Be clear, avoid jargon, and aim to complete the information through 
-        conversational interaction. Use previous context if available to enhance personalization.
-        
-        Now handle the current step:
-        {step_prompt}
-        
-        Your task is to:
-            - Generate a concise, user-facing message (`ai_message`) asking for or confirming information.
-            - If the user's input (parameter) is sufficient to proceed, extract it into the `data` field. Otherwise, leave `data` as null and guide the user to clarify.
-        
-            - If `data` is provided (i.e. already filled), simply thank the user for their response.
-            - Do **not** ask any follow-up questions or mention the next step.
-            - All conversation must be conducted in **Korean**
-            - Politely ask the user to 말씀 their information.
-
-        Always respond in **this JSON structure**:
-        {{
-          "ai_message": "string",  
-          "data": "string or null"
-        }}
-        
-        If the data field is filled, simply thank the user. Do not mention anything about the next step.    
-        
-        """
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_message),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("user", "{input}"),
-        ]
-    )
-    output_parser = OutputFixingParser.from_llm(
-        parser=PydanticOutputParser(pydantic_object=InvestmentStepOutput),
-        llm=llm,
-        max_retries=3,
-    )
-    agent_chain = prompt | llm | output_parser
-    return agent_chain
-
-def fetch_move_in(move_in_output: MoveInOutput):
-    new_address = move_in_output.after_address.split(",")
-
-    response = requests.post(
-        url=f"{KIOSK_APP_URL}/move-in",
-        json={
-            "name": move_in_output.name,
-            "phoneNumber": move_in_output.phone_number,
-            "reason": move_in_output.reason,
-            "newAddress": {
-                "sido": new_address[0],
-                "sigungu": new_address[1],
-                "roadName": new_address[2],
-                "buildingNumber": int(new_address[3]),
-                "detail": new_address[4]
-            }
-        }
-    )
-
-    return response.status_code
-
-def fetch_resident_registration(resident_registration_output: ResidentRegistrationOutput):
-    response = requests.post(
-        url=f"{KIOSK_APP_URL}/resident-registration",
-        json={
-            "registrationNumber": resident_registration_output.registration_number,
-            "type": resident_registration_output.type,
-            "copyNumber": resident_registration_output.number
-        }
-    )
-
-    return response.status_code
 
 @mcp_server.tool(name="move-in-conversation")
 async def move_in_conversation(ctx: Context, session_id: str) -> Output:
     chat_history = []
     move_in_output = MoveInOutput()
-    agent_chain = await retrieve_move_in_agent_chain()
+    agent_chain = await retrieve_agent_chain(MOVE_IN_PROMPT)
 
     for step_name, step_prompt in MOVE_IN_STEPS:
         user_message = ""
@@ -327,14 +135,14 @@ async def move_in_conversation(ctx: Context, session_id: str) -> Output:
 
     code = fetch_move_in(move_in_output)
 
-    if code != 200: return Output(message="다시 시도해 주십시오.")
-    return Output(message="전입 신고가 완료되었습니다.")
+    if code != 200: return Output(message="다시 시도해 주십시오.", status_code=code)
+    return Output(message="전입 신고가 완료되었습니다.", status_code=code)
 
 @mcp_server.tool(name="resident-registration-conversation")
 async def resident_registration_conversation(ctx: Context, session_id: str) -> Output:
     chat_history = []
     resident_registration_output = ResidentRegistrationOutput()
-    agent_chain = await retrieve_resident_registration_agent_chain()
+    agent_chain = await retrieve_agent_chain(RESIDENT_REGISTRATION_PROMPT)
 
     for step_name, step_prompt in RESIDENT_REGISTRATION_STEP:
         user_message = ""
@@ -386,8 +194,8 @@ async def resident_registration_conversation(ctx: Context, session_id: str) -> O
 
     code = fetch_resident_registration(resident_registration_output)
 
-    if code != 200: return Output(message="다시 시도해 주십시오.")
-    return Output(message="주민등록초본을 출력 중입니다.")
+    if code != 200: return Output(message="다시 시도해 주십시오.", status_code=code)
+    return Output(message="주민등록초본을 출력 중입니다.", status_code=code)
 
 if __name__ == "__main__":
     mcp_server.run(transport="streamable-http")
