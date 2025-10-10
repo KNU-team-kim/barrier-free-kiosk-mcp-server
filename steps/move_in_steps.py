@@ -21,23 +21,58 @@ MOVE_IN_STEPS = [
         """
     ),
     (
-        "before_address",
+        "before_sido",
         """
-            Step 4, Ask the user to provide the classification of their previous place of residence. Ask for the city/province (시/도), district/county (시/군/구), without giving any formatting instructions. If all of them are provided, confirm.
+            Step 4, Ask the user to provide the classification of their previous place of residence. Ask for the city/province (시/도) without giving any formatting instructions. If provided, confirm.
                 example of city/province: 대구광역시, 서울특별시 etc.  
-                example of district/county: 강남구, 중구, 수원시 etc.
-            Classifications must be splited by `,`. Do NOT show any example to the user.
+            Do NOT show any example to the user.
         """
     ),
     (
-        "after_address",
+        "before_sigungu",
         """
-            Step 5, Ask the user to provide the classification of their current place of residence. Ask for the city/province (시/도), district/county (시/군/구), road name (도로명), building number (건물 번호), detail address (상세 주소), without giving any formatting instructions. If all of them are provided, confirm.
-                example of city/province: 대구광역시, 서울특별시 etc.  
+            Step 5, Ask the user to provide the classification of their previous place of residence. Ask for the district/county (시/군/구), without giving any formatting instructions. If provided, confirm.
                 example of district/county: 강남구, 중구, 수원시 etc.
+            Do NOT show any example to the user.
+        """
+    ),
+    (
+        "after_sido",
+        """
+            Step 6, Ask the user to provide the classification of their current place of residence. Ask for the city/province (시/도), without giving any formatting instructions. If provided, confirm.
+                example of city/province: 대구광역시, 서울특별시 etc.  
+            Do NOT show any example to the user.
+        """
+    ),
+        (
+        "after_sigungu",
+        """
+            Step 7, Ask the user to provide the classification of their current place of residence. Ask for the district/county (시/군/구), without giving any formatting instructions. If provided, confirm.
+                example of district/county: 강남구, 중구, 수원시 etc.
+            Do NOT show any example to the user.
+        """
+    ),
+        (
+        "after_road_name,",
+        """
+            Step 8, Ask the user to provide the classification of their current place of residence. Ask for the road name (도로명), without giving any formatting instructions. If provided, confirm.
                 example of road name: 대학로, 산격로, 대천로 etc.
+            Do NOT show any example to the user.
+        """
+    ),
+        (
+        "after_building_number",
+        """
+            Step 9, Ask the user to provide the classification of their current place of residence. Ask for the building number (건물 번호), without giving any formatting instructions. If provided, confirm.
+            Do NOT show any example to the user.
+        """
+    ),
+        (
+        "after_sido",
+        """
+            Step 10, Ask the user to provide the classification of their current place of residence. Ask for the detail address (상세 주소), without giving any formatting instructions. If provided, confirm.
                 example of detail address: 100동 100호 etc.
-            Classifications must be splited by `,`. Do NOT show any example to the user.
+            Do NOT show any example to the user.
         """
     )
 ]

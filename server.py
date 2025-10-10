@@ -100,7 +100,7 @@ async def move_in_conversation(ctx: Context, session_id: str) -> Output:
                     }
                 )
 
-                if ai_output.data:
+                if ai_output.data:                        
                     retrieve_output = False
                     step_output = ai_output.data
 
@@ -109,6 +109,7 @@ async def move_in_conversation(ctx: Context, session_id: str) -> Output:
                         {
                             "session_id": session_id,
                             "retrieve_output": retrieve_output,
+                            "data": ai_output.data,
                             "ai_message": ai_output.ai_message,
                             "step_name": step_name,
                         }
