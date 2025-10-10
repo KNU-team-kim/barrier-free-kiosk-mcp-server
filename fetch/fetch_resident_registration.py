@@ -13,3 +13,13 @@ def fetch_resident_registration(resident_registration_output: ResidentRegistrati
     )
 
     return response.status_code
+
+def fetch_check_registration_number(registration_number: str):
+    response = requests.get(
+        url=f"{KIOSK_APP_URL}/resident-registration/check",
+        params={"registrationNumber": registration_number}
+    )
+
+    if response.status_code != 200: return None
+    
+    return response.json()

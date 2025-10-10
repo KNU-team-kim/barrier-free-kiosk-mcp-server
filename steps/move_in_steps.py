@@ -53,7 +53,7 @@ MOVE_IN_STEPS = [
         """
     ),
         (
-        "after_road_name,",
+        "after_road_name",
         """
             Step 8, Ask the user to provide the classification of their current place of residence. Ask for the road name (도로명), without giving any formatting instructions. If provided, confirm.
                 example of road name: 대학로, 산격로, 대천로 etc.
@@ -68,7 +68,7 @@ MOVE_IN_STEPS = [
         """
     ),
         (
-        "after_sido",
+        "after_detail_address",
         """
             Step 10, Ask the user to provide the classification of their current place of residence. Ask for the detail address (상세 주소), without giving any formatting instructions. If provided, confirm.
                 example of detail address: 100동 100호 etc.

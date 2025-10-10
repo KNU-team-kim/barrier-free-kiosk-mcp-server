@@ -11,8 +11,8 @@ from prompts.resident_registration_prompt import RESIDENT_REGISTRATION_PROMPT
 from interfaces.move_in_output import MoveInOutput
 from interfaces.resident_registration_output import ResidentRegistrationOutput
 from interfaces.output import Output
-from fetch.fetch_move_in import fetch_move_in
-from fetch.fetch_resident_registration import fetch_resident_registration
+from fetch.fetch_move_in import fetch_move_in, fetch_check_phone_number, fetch_retrieve_address
+from fetch.fetch_resident_registration import fetch_resident_registration, fetch_check_registration_number
 
 from mcp.server.elicitation import (
     AcceptedElicitation,
@@ -100,9 +100,17 @@ async def move_in_conversation(ctx: Context, session_id: str) -> Output:
                     }
                 )
 
-                if ai_output.data:                        
-                    retrieve_output = False
-                    step_output = ai_output.data
+                if ai_output.data:
+                    if step_name == "phone_number" and not fetch_check_phone_number(ai_output.data, move_in_output.name):
+                        ai_output.ai_message = "정보를 찾을 수 없습니다. 전화번호를 다시 말씀해주세요."
+                        ai_output.data = None
+                    elif step_name == "before_sigungu":
+                        retrieve_output = False
+                        step_output = ai_output.data
+                        ai_output.data = fetch_retrieve_address(move_in_output.name, move_in_output.phone_number)
+                    else:
+                        retrieve_output = False
+                        step_output = ai_output.data
 
                 response = await ctx.elicit(
                     message=json.dumps(
@@ -136,7 +144,7 @@ async def move_in_conversation(ctx: Context, session_id: str) -> Output:
 
     code = fetch_move_in(move_in_output)
 
-    if code != 200: return Output(message="다시 시도해 주십시오.", status_code=code)
+    if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code)
     return Output(message="전입 신고가 완료되었습니다.", status_code=code)
 
 @mcp_server.tool(name="resident-registration-conversation")
@@ -161,14 +169,19 @@ async def resident_registration_conversation(ctx: Context, session_id: str) -> O
                 )
 
                 if ai_output.data:
-                    retrieve_output = False
-                    step_output = ai_output.data
+                    if step_name == "registration_number" and not fetch_check_registration_number(ai_output.data):
+                        ai_output.ai_message = "정보를 찾을 수 없습니다. 주민등록번호를 다시 입력해주세요."
+                        ai_output.data = None
+                    else:
+                        retrieve_output = False
+                        step_output = ai_output.data
 
                 response = await ctx.elicit(
                     message=json.dumps(
                         {
                             "session_id": session_id,
                             "retrieve_output": retrieve_output,
+                            "data": ai_output.data,
                             "ai_message": ai_output.ai_message,
                             "step_name": step_name,
                         }
@@ -195,7 +208,7 @@ async def resident_registration_conversation(ctx: Context, session_id: str) -> O
 
     code = fetch_resident_registration(resident_registration_output)
 
-    if code != 200: return Output(message="다시 시도해 주십시오.", status_code=code)
+    if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code)
     return Output(message="주민등록초본을 출력 중입니다.", status_code=code)
 
 if __name__ == "__main__":
