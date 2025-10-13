@@ -1,3 +1,5 @@
+# server.py
+
 import anyio
 import json
 from loguru import logger
@@ -79,8 +81,9 @@ async def retrieve_agent_chain(PROMPT: str):
     agent_chain = prompt | llm | output_parser
     return agent_chain
 
-@mcp_server.tool(name="move-in-conversation")
+@mcp_server.tool(name="move-in-conversation", title="전입신고")
 async def move_in_conversation(ctx: Context, session_id: str) -> Output:
+    """사용자가 '전입신고'나 '이사' 관련 요청을 할 때 사용됩니다. 전입신고 절차를 진행합니다."""
     chat_history = []
     move_in_output = MoveInOutput()
     agent_chain = await retrieve_agent_chain(MOVE_IN_PROMPT)
@@ -147,8 +150,9 @@ async def move_in_conversation(ctx: Context, session_id: str) -> Output:
     if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code)
     return Output(message="전입 신고가 완료되었습니다.", status_code=code)
 
-@mcp_server.tool(name="resident-registration-conversation")
+@mcp_server.tool(name="resident-registration-conversation", title="주민등록초본 발급")
 async def resident_registration_conversation(ctx: Context, session_id: str) -> Output:
+    """사용자가 '주민등록등본', '주민등록초본' 등 관련 서류 발급을 요청할 때 사용됩니다."""
     chat_history = []
     resident_registration_output = ResidentRegistrationOutput()
     agent_chain = await retrieve_agent_chain(RESIDENT_REGISTRATION_PROMPT)
