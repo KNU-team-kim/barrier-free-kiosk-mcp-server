@@ -14,6 +14,6 @@ RESIDENT_REGISTRATION_STEP = [
     ),
     (
         "number",
-        "Step 3, Ask the user to specify the number of copies they want to issue. If provided, confirm."
+        "Step 3, Ask the user to specify the number of copies they want to issue, without giving any formatting instructions. The number of copies must be integer. If provided, confirm."
     )
 ]

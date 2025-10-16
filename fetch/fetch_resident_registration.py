@@ -8,7 +8,7 @@ def fetch_resident_registration(resident_registration_output: ResidentRegistrati
         json={
             "registrationNumber": resident_registration_output.registration_number,
             "type": resident_registration_output.type,
-            "copyNumber": resident_registration_output.number
+            "copyNumber": int(resident_registration_output.number)
         }
     )
 
