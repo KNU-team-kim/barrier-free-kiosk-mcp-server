@@ -1,78 +1,72 @@
 MOVE_IN_STEPS = [
     (
         "name",
-        "Step 1, The user needs to provide their name. Ask the user to tell their name. If a name is provided, confirm."
+        "1단계, 사용자가 이름을 입력해야 합니다. 이름을 말씀해달라고 요청하세요. 이름이 제공되면 승인합니다."
     ),
     (
         "phone_number",
-        "Step 2, The user needs to provide their phone number. Ask the user to tell their phone number, without giving any formatting instructions. If a phone number is provided without hyphens, automatically convert it into the format 010-1234-5678. If provided, confirm."
+        "2단계, 사용자가 전화번호를 입력해야 합니다. 형식에 대한 안내 없이 전화번호를 말씀해달라고 요청하세요. 사용자가 하이픈 없이 입력한 경우, 자동으로 010-1234-5678 형식으로 변환하세요. 전화번호가 제공되면 승인합니다."
     ),
     (
         "reason",
         """
-        Step 3, The user must decide the reason for moving in. Ask the user why they are moving in. If a reason is provided, confirm.
-        Do NOT show any category list to the user. Instead, infer the correct category internally based on their response and store exactly one of: 
-            - JOB (Employment: getting a job, starting a business, job relocation, etc.) 
-            - FAMILY (Family: living with family, marriage, moving out from parents, etc.) 
-            - HOUSE (Housing: buying a house, lease expiration, rent issues, redevelopment, etc.) 
-            - EDUCATION (Education: admission, studies, children's education, etc.) 
-            - ENVIRONMENT (Living environment: transportation, culture, facilities, etc.) 
-            - NATURE (Natural environment: health, pollution, rural life, etc.)
+        3단계, 사용자가 전입 사유를 선택해야 합니다. 전입 사유가 무엇인지 물어보세요. 사용자가 이유를 입력하면 승인합니다.
+        사용자에게 카테고리 목록을 보여주지 말고, 사용자의 응답을 바탕으로 내부적으로 다음 중 하나로 분류하여 저장하세요:
+            - JOB (직업: 취업, 창업, 직장 이동 등)
+            - FAMILY (가족: 가족과 함께 거주, 결혼, 부모님 댁에서 독립 등)
+            - HOUSE (주거: 주택 구입, 임대 만료, 전세 문제, 재개발 등)
+            - EDUCATION (교육: 입학, 학업, 자녀 교육 등)
+            - ENVIRONMENT (생활환경: 교통, 문화, 편의시설 등)
+            - NATURE (자연환경: 건강, 오염, 전원생활 등)
         """
     ),
     (
         "before_sido",
         """
-            Step 4, Ask the user to provide the classification of their previous place of residence. Ask for the city/province (시/도) without giving any formatting instructions. If provided, confirm.
-                example of city/province: 대구광역시, 서울특별시 etc.  
-            Do NOT show any example to the user.
+        4단계, 사용자의 이전 거주지 정보를 입력받습니다. 시/도를 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시(대구광역시, 서울특별시 등)는 사용자에게 보여주지 마세요.
         """
     ),
     (
         "before_sigungu",
         """
-            Step 5, Ask the user to provide the classification of their previous place of residence. Ask for the district/county (시/군/구), without giving any formatting instructions. If provided, confirm.
-                example of district/county: 강남구, 중구, 수원시 etc.
-            Do NOT show any example to the user.
+        5단계, 사용자의 이전 거주지 정보를 입력받습니다. 시/군/구를 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시(강남구, 중구, 수원시 등)는 사용자에게 보여주지 마세요.
         """
     ),
     (
         "after_sido",
         """
-            Step 6, Ask the user to provide the classification of their current place of residence. Ask for the city/province (시/도), without giving any formatting instructions. If provided, confirm.
-                example of city/province: 대구광역시, 서울특별시 etc.  
-            Do NOT show any example to the user.
+        6단계, 사용자의 현재 거주지 정보를 입력받습니다. 시/도를 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시(대구광역시, 서울특별시 등)는 사용자에게 보여주지 마세요.
         """
     ),
-        (
+    (
         "after_sigungu",
         """
-            Step 7, Ask the user to provide the classification of their current place of residence. Ask for the district/county (시/군/구), without giving any formatting instructions. If provided, confirm.
-                example of district/county: 강남구, 중구, 수원시 etc.
-            Do NOT show any example to the user.
+        7단계, 사용자의 현재 거주지 정보를 입력받습니다. 시/군/구를 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시(강남구, 중구, 수원시 등)는 사용자에게 보여주지 마세요.
         """
     ),
-        (
+    (
         "after_road_name",
         """
-            Step 8, Ask the user to provide the classification of their current place of residence. Ask for the road name (도로명), without giving any formatting instructions. If provided, confirm.
-                example of road name: 대학로, 산격로, 대천로 etc.
-            Do NOT show any example to the user.
+        8단계, 사용자의 현재 거주지 정보를 입력받습니다. 도로명을 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시(대학로, 산격로, 대천로 등)는 사용자에게 보여주지 마세요.
         """
     ),
-        (
+    (
         "after_building_number",
         """
-            Step 9, Ask the user to provide the classification of their current place of residence. Ask for the building number (건물 번호), without giving any formatting instructions. If provided, confirm.
-            Do NOT show any example to the user.
+        9단계, 사용자의 현재 거주지 정보를 입력받습니다. 건물 번호를 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시는 사용자에게 보여주지 마세요.
         """
     ),
-        (
+    (
         "after_detail_address",
         """
-            Step 10, Ask the user to provide the classification of their current place of residence. Ask for the detail address (상세 주소), without giving any formatting instructions. If provided, confirm.
-                example of detail address: 100동 100호 etc.
-            Do NOT show any example to the user.
+        10단계, 사용자의 현재 거주지 정보를 입력받습니다. 상세 주소를 말씀해달라고 요청하세요. 형식에 대한 안내 없이 요청하고, 제공되면 승인합니다.
+        예시(100동 100호 등)는 사용자에게 보여주지 마세요.
         """
     )
 ]

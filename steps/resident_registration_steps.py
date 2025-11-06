@@ -1,19 +1,19 @@
 RESIDENT_REGISTRATION_STEP = [
     (
         "registration_number",
-        "Step 1, Ask the user to tell their registration number (주민등록번호). Please guide them not to say it aloud, but to enter the number using the keypad below. If provided, confirm."
+        "1단계, 사용자의 주민등록번호를 입력받습니다. 음성으로 말씀하지 말고, 반드시 아래 키패드를 이용해 번호를 입력하도록 안내하세요. 입력이 완료되면 승인합니다."
     ),
     (
         "type",
         """
-            Step 2, Ask the user whether they want to issue the entire document or select specific sections. If provided, confirm.
-            Do NOT show any category list to the user. Instead, infer the correct category internally based on their response and store exactly one of:
-                - SIMPLE(select specific sections)
-                - DETAILED(entire document)
+        2단계, 사용자가 전체 문서를 발급할지, 특정 항목만 선택해 발급할지를 물어보세요. 응답이 제공되면 승인합니다.
+        사용자에게 선택 목록을 직접 보여주지 말고, 응답 내용을 바탕으로 내부적으로 다음 중 하나로 분류하여 저장하세요:
+            - SIMPLE (일부 항목 선택 발급)
+            - DETAILED (전체 문서 발급)
         """
     ),
     (
         "number",
-        "Step 3, Ask the user to specify the number of copies they want to issue, without giving any formatting instructions. The number of copies must be integer. If provided, confirm."
+        "3단계, 사용자가 발급을 원하는 부수(매수)를 입력하도록 요청하세요. 형식에 대한 안내 없이 입력받으며, 부수는 정수여야 합니다. 입력이 제공되면 승인합니다."
     )
 ]
