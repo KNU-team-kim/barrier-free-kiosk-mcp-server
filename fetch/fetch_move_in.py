@@ -13,7 +13,8 @@ def fetch_move_in(move_in_output: MoveInOutput):
                 "sido": move_in_output.after_sido,
                 "sigungu": move_in_output.after_sigungu,
                 "roadName": move_in_output.after_road_name,
-                "buildingNumber": int(move_in_output.after_building_number),
+                "mainBuildingNumber": int(move_in_output.after_building_number_main),
+                "subBuildingNumber": int(move_in_output.after_building_number_sub) if move_in_output.after_building_number_sub is not None else None,
                 "detail": move_in_output.after_detail_address
             }
         }

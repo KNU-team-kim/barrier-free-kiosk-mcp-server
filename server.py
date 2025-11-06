@@ -73,10 +73,10 @@ async def move_in_conversation(ctx: Context, session_id: Optional[str] = None) -
 
     for step_name, step_prompt in MOVE_IN_STEPS:
         user_message = ""
-        step_output = None
+        step_output = "nothing"
         retrieve_output = True
 
-        while step_output is None:
+        while step_output == "nothing":
             try:
                 ai_output = await agent_chain.ainvoke(
                     input={
@@ -97,6 +97,17 @@ async def move_in_conversation(ctx: Context, session_id: Optional[str] = None) -
                         retrieve_output = False
                         step_output = ai_output.data
                         ai_output.data = fetch_retrieve_address(move_in_output.name, move_in_output.phone_number)
+                    elif step_name == "after_building_number_sub" and ai_output.data == "null":
+                        retrieve_output = False
+                        ai_output.data = None
+                        step_output = ai_output.data
+                    elif step_name == "other_service":
+                        retrieve_output = False
+                        step_output = None
+                        if ai_output.data == "null":
+                            ai_output.data = []
+                        else:
+                            ai_output.data = [part.strip() for part in ai_output.data.split(",")]
                     else:
                         retrieve_output = False
                         step_output = ai_output.data
@@ -129,7 +140,8 @@ async def move_in_conversation(ctx: Context, session_id: Optional[str] = None) -
                 logger.exception(e)
                 raise e
 
-        setattr(move_in_output, step_name, step_output)
+        if hasattr(move_in_output, step_name):
+            setattr(move_in_output, step_name, step_output)
 
     code = fetch_move_in(move_in_output)
 
@@ -145,15 +157,23 @@ async def resident_registration_conversation(ctx: Context, session_id: Optional[
 
     for step_name, step_prompt in RESIDENT_REGISTRATION_STEP:
         user_message = ""
-        step_output = None
+        step_output = "nothing"
         retrieve_output = True
 
-        while step_output is None:
+        while step_output == "nothing":
             try:
+                new_step_prompt = step_prompt
+
+                if step_name == 'check':
+                    new_step_prompt = step_prompt.format(
+                        number=resident_registration_output.number,
+                        fee=4000
+                    )
+
                 ai_output = await agent_chain.ainvoke(
                     input={
                         "input": user_message,
-                        "step_prompt": step_prompt,
+                        "step_prompt": new_step_prompt,
                         "chat_history": chat_history,
                     }
                 )
@@ -197,7 +217,8 @@ async def resident_registration_conversation(ctx: Context, session_id: Optional[
                 logger.exception(e)
                 raise e
 
-        setattr(resident_registration_output, step_name, step_output)
+        if hasattr(resident_registration_output, step_name):
+            setattr(resident_registration_output, step_name, step_output)
 
     code = fetch_resident_registration(resident_registration_output)
 
