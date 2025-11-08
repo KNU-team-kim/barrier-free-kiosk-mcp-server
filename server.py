@@ -87,7 +87,7 @@ async def move_in_conversation(ctx: Context, session_id: Optional[str] = None) -
                 )
 
                 if ai_output.cancel:
-                    return Output(message="취소되었습니다. 어떤 서비스를 원하시나요?")
+                    return Output(message="취소되었습니다. 어떤 서비스를 원하시나요?", step_name="home")
 
                 if ai_output.data:
                     if step_name == "phone_number" and not fetch_check_phone_number(ai_output.data, move_in_output.name):
@@ -145,8 +145,8 @@ async def move_in_conversation(ctx: Context, session_id: Optional[str] = None) -
 
     code = fetch_move_in(move_in_output)
 
-    if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code)
-    return Output(message="전입 신고가 완료되었습니다.", status_code=code)
+    if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code, step_name="home")
+    return Output(message="전입 신고가 완료되었습니다.", status_code=code, step_name="complete_move_in")
 
 @mcp_server.tool(name="resident-registration-conversation", title="주민등록초본 발급")
 async def resident_registration_conversation(ctx: Context, session_id: Optional[str] = None) -> Output:
@@ -179,7 +179,7 @@ async def resident_registration_conversation(ctx: Context, session_id: Optional[
                 )
 
                 if ai_output.cancel:
-                    return Output(message="취소되었습니다. 어떤 서비스를 원하시나요?")
+                    return Output(message="취소되었습니다. 어떤 서비스를 원하시나요?", step_name="home")
 
                 if ai_output.data:
                     if step_name == "registration_number" and not fetch_check_registration_number(ai_output.data):
@@ -222,8 +222,8 @@ async def resident_registration_conversation(ctx: Context, session_id: Optional[
 
     code = fetch_resident_registration(resident_registration_output)
 
-    if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code)
-    return Output(message="주민등록초본을 출력 중입니다.", status_code=code)
+    if code != 200: return Output(message="오류가 발생했습니다. 다시 시도해 주십시오.", status_code=code, step_name="home")
+    return Output(message="주민등록초본을 출력 중입니다.", status_code=code, step_name="complete_resident_registration")
 
 if __name__ == "__main__":
     mcp_server.run(transport="streamable-http")
