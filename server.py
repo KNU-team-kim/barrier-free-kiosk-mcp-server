@@ -42,8 +42,7 @@ class StepOutput(BaseModel):
 
 async def retrieve_agent_chain(PROMPT: str):
     llm = ChatOpenAI(
-        model="gpt-oss-20b", 
-        base_url=OPENAI_API_URL,
+        model="gpt-4.1", 
         api_key=OPENAI_API_KEY,
         streaming=False
     )
