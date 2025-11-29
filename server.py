@@ -264,7 +264,7 @@ async def resident_registration_conversation(ctx: Context, session_id: Optional[
             try:
                 new_step_prompt = step_prompt
 
-                if step_name == 'check':
+                if step_name == 'check':                    
                     new_step_prompt = step_prompt.format(
                         number=resident_registration_output.number,
                         fee=4000
